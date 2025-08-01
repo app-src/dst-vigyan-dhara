@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import base64
 
+st.set_page_config(page_title="Vigyan Dhara - Expenditure data",page_icon='📊', layout="wide")
+
 def get_base64_image(path):
     with open(path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
@@ -67,7 +69,7 @@ st.markdown("""
             """, unsafe_allow_html=True)
 
 
-st.set_page_config(page_title="Vigyan Dhara - Expenditure data", layout="wide")
+
 
 
 custom_footer = """
