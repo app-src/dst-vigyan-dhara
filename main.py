@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 import streamlit.components.v1 as components
 import extra_streamlit_components as stx
 from auth import load_users, verify_user
+from fastapi import Response
 
 
 COOKIE_NAME = "vigyan_login"
@@ -27,20 +28,27 @@ users = load_users()
 # Cookie manager
 cookie_manager = stx.CookieManager()
 
+
 def is_logged_in():
     cookies = cookie_manager.get_all()
-    return COOKIE_NAME in cookies
+    return COOKIE_NAME in cookies or 'username' in st.session_state
 
 def set_login_cookie(user):
-    expire_date = datetime.now(timezone.utc) + timedelta(days=COOKIE_EXPIRY_DAYS)
+    # expire_date = datetime.now(timezone.utc) + timedelta(days=COOKIE_EXPIRY_DAYS)
+    expire_date = datetime.now(timezone.utc) + timedelta(seconds=30)
     cookie_manager.set(COOKIE_NAME, user, expires_at=expire_date)
-    time.sleep(2)
-    st.markdown("""
-        <meta http-equiv="refresh" content="0">
-        """, unsafe_allow_html=True)
+    st.session_state['username'] = user
 
 def clear_login_cookie():
-    cookie_manager.delete(COOKIE_NAME)
+    st.session_state.clear()
+    try:
+        cookie_manager.delete(COOKIE_NAME)
+    except Exception as e:
+        st.error(f"Error clearing cookie: {e}")
+
+    time.sleep(1)
+    st.stop()
+    st.rerun()
 
 def get_base64_image(path):
     with open(path, "rb") as img_file:
@@ -65,7 +73,6 @@ def load_data():
 def main():
     if not is_logged_in():
         st.title("🔐 Login")
-
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
         if st.button("Login"):
@@ -244,8 +251,7 @@ def main():
 
 
     if st.button("Logout"):
-        st.session_state.clear()
-        st.rerun()
+        clear_login_cookie()
 
 
 if __name__ == "__main__":
