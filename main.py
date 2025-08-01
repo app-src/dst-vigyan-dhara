@@ -53,8 +53,11 @@ def get_base64_image(path):
         return base64.b64encode(img_file.read()).decode()
 def hide_zeros_and_nans(val):
     if val == 0 or pd.isna(val):
-            return ""
-    return val
+        return ""
+    if isinstance(val, float):
+        return f"{val:.2f}".rstrip('0').rstrip('.')  # e.g., 2.50 → 2.5, 2.00 → 2
+    return str(val)
+
 
 
 def colorCodeRows(row):
