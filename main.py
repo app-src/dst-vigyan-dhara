@@ -1,5 +1,14 @@
 import streamlit as st
 import pandas as pd
+import base64
+
+def get_base64_image(path):
+    with open(path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode()
+
+logo_left = get_base64_image("dst.png")
+logo_right = get_base64_image("dsu.png")
+
 
 color_map = {
     "Budget": "#FFF3E3",       # Pink
@@ -10,8 +19,51 @@ color_map = {
 
 GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTLV_lAFz5evZVNPLdECqsOjD10jQN4ATlna5UdmUOz24mWTrkjbevk1qvn4u2GZAhssoc9B5Qp_TlC/pub?gid=0&single=true&output=csv"
 
+st.markdown("""
+    <style>
+        header {visibility: hidden;}
+        .block-container {
+            padding-top: 2rem;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+                <style>
+                    .custom-header {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        background-color: #f0f0f0;
+                        padding: 10px 30px;
+                        z-index: 9999;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        border-bottom: 1px solid #ccc;
+                    }
+                    .custom-header h2 {
+                        margin: 0;
+                        color: #333;
+                    }
+                    .custom-header img {
+                        height: 100%;
+                    }
+                    .block-container {
+                        padding-top: 80px; /* Push page content below fixed header */
+                    }
+                </style>"""+f"""
+
+                <div class="custom-header">
+                    <img src="data:image/png;base64, {logo_left}" />
+                    <h2>Vigyan Dhara Dashboard</h2>
+                    <img s src="data:image/png;base64, {logo_right}" />
+                </div>
+            """, unsafe_allow_html=True)
+
+
 st.set_page_config(page_title="Vigyan Dhara - Expenditure data", layout="wide")
-st.title("Vigyan Dhara - Expenditure data")
 
 
 custom_footer = """
