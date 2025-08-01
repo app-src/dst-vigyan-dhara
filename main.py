@@ -45,7 +45,8 @@ def clear_login_cookie():
     except Exception as e:
         st.error(f"Error clearing cookie: {e}")
 
-    time.sleep(1)
+    time.sleep(4)
+    st.success("Logged out successfully! Close the tab or refresh the page.")
     st.rerun()
 
 def get_base64_image(path):
@@ -232,7 +233,7 @@ def main():
             if selected_filters:
                 filtered_df = df[df[second_col].isin(selected_filters)]
                 # Apply row coloring and zero null filter
-                cleaned_df = filtered_df.copy().applymap(hide_zeros_and_nans)
+                cleaned_df = filtered_df.copy().map(hide_zeros_and_nans)
                 styled_df = cleaned_df.style.apply(colorCodeRows, axis=1)
                 st.dataframe(styled_df, use_container_width=True,height=len(filtered_df) * 35 + 50)
             else:
