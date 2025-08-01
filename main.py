@@ -5,9 +5,13 @@ import base64
 def get_base64_image(path):
     with open(path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
+def hide_zeros_and_nans(val):
+    if pd.isna(val) or val == 0:
+        return ""
+    return val
 
-logo_left = get_base64_image("dst.png")
-logo_right = get_base64_image("dsu.png")
+logo_left = get_base64_image("dsu.png")
+logo_right = get_base64_image("dst.png")
 
 
 color_map = {
@@ -57,7 +61,7 @@ st.markdown("""
 
                 <div class="custom-header">
                     <img src="data:image/png;base64, {logo_left}" />
-                    <h2>Vigyan Dhara Dashboard</h2>
+                    <h2>Vigyan Dhara Expenditure Data</h2>
                     <img s src="data:image/png;base64, {logo_right}" />
                 </div>
             """, unsafe_allow_html=True)
@@ -172,17 +176,8 @@ try:
         # --- Filter data ---
         if selected_filters:
             filtered_df = df[df[second_col].isin(selected_filters)]
-            # Apply row coloring
-            styled_df = filtered_df.style.apply(colorCodeRows, axis=1)
-
-            # Show styled dataframe
-            # st.dataframe(
-            #     styled_df,
-            #     use_container_width=True,
-            #     height=len(styled_df) * 35 + 50
-            #     )
-            
-            # st.write(styled_df)
+            # Apply row coloring and zero null filter
+            styled_df = filtered_df.style.format(hide_zeros_and_nans).apply(colorCodeRows, axis=1)
             st.markdown(
                         f"""
                         <div style='max-height:{len(df) * 35 + 50}px; overflow-y:auto;'>
