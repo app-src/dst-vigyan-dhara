@@ -34,8 +34,7 @@ def is_logged_in():
     return COOKIE_NAME in cookies or 'username' in st.session_state
 
 def set_login_cookie(user):
-    # expire_date = datetime.now(timezone.utc) + timedelta(days=COOKIE_EXPIRY_DAYS)
-    expire_date = datetime.now(timezone.utc) + timedelta(seconds=30)
+    expire_date = datetime.now(timezone.utc) + timedelta(days=COOKIE_EXPIRY_DAYS)
     cookie_manager.set(COOKIE_NAME, user, expires_at=expire_date)
     st.session_state['username'] = user
 
@@ -47,16 +46,16 @@ def clear_login_cookie():
         st.error(f"Error clearing cookie: {e}")
 
     time.sleep(1)
-    st.stop()
     st.rerun()
 
 def get_base64_image(path):
     with open(path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
 def hide_zeros_and_nans(val):
-    if pd.isna(val) or val == 0:
-        return ""
+    if val == 0 or pd.isna(val):
+            return ""
     return val
+
 
 def colorCodeRows(row):
     last_col_value = row[row.index[-1]]
@@ -162,16 +161,13 @@ def main():
         gap: 20px;
         padding: 10px;
         flex-wrap: wrap;
+        text-align: center;
     }
     .vertical-line {
         width: 1px;
         height: 30px;
         background-color: grey;
         align-self: center;
-    }
-
-    .footer-banner div {
-        text-align: center;
     }
     </style>
 
@@ -233,16 +229,9 @@ def main():
             if selected_filters:
                 filtered_df = df[df[second_col].isin(selected_filters)]
                 # Apply row coloring and zero null filter
-                styled_df = filtered_df.style.format(hide_zeros_and_nans).apply(colorCodeRows, axis=1)
-                st.markdown(
-                            f"""
-                            <div style='max-height:{len(df) * 35 + 50}px; overflow-y:auto;'>
-                                <style>table {{margin: 0 auto;}}</style>
-                                {styled_df.to_html()}
-                            </div>
-                            """,
-                            unsafe_allow_html=True
-                            )
+                cleaned_df = filtered_df.copy().applymap(hide_zeros_and_nans)
+                styled_df = cleaned_df.style.apply(colorCodeRows, axis=1)
+                st.dataframe(styled_df, use_container_width=True,height=len(filtered_df) * 35 + 50)
             else:
                 st.warning("Select at least one option to view data.")
 
