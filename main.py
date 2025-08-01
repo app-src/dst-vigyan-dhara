@@ -19,7 +19,7 @@ logo_right = get_base64_image("dst.png")
 color_map = {
     "Budget": "#FFF3E3",       # Pink
     "Expenditure": "#6CCCA9",   # Light green
-    "InProcess": "#ADD8E6"          # Light blue
+    "IFD": "#ADD8E6"          # Light blue
 
 }
 
