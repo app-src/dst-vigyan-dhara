@@ -7,7 +7,6 @@ from datetime import datetime, timedelta, timezone
 import streamlit.components.v1 as components
 import extra_streamlit_components as stx
 from auth import load_users, verify_user
-from fastapi import Response
 
 
 COOKIE_NAME = "vigyan_login"
@@ -87,7 +86,7 @@ def main():
 
         st.stop()
 
-    st.set_page_config(page_title="Vigyan Dhara - Expenditure data",page_icon='📊', layout="wide")
+    st.set_page_config(page_title="Vigyan Dhara - Expenditure data 2024-25",page_icon='📊', layout="wide")
 
 
     logo_left = get_base64_image("dsu.png")
@@ -234,7 +233,12 @@ def main():
                 filtered_df = df[df[second_col].isin(selected_filters)]
                 # Apply row coloring and zero null filter
                 cleaned_df = filtered_df.copy().map(hide_zeros_and_nans)
-                styled_df = cleaned_df.style.apply(colorCodeRows, axis=1)
+                styled_df = (cleaned_df.style
+                            .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=[filtered_df.columns[-2]])  # Bold last column
+                            .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=[filtered_df.columns[0]])  # First column
+                            .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=(filtered_df.index[-1], slice(None)))  # Bold last row
+                            .set_table_styles([{'font-weight': 'bold','selector': 'th', 'props': [('font-size', '24px')]}])  # Header font size
+                            .apply(colorCodeRows, axis=1))
                 st.dataframe(styled_df, use_container_width=True,height=len(filtered_df) * 35 + 50)
             else:
                 st.warning("Select at least one option to view data.")
