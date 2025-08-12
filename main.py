@@ -132,7 +132,7 @@ def main():
 
                     <div class="custom-header">
                         <img src="data:image/png;base64, {logo_left}" />
-                        <h2>Vigyan Dhara Expenditure Data</h2>
+                        <h2>Vigyan Dhara Expenditure Data 2024-25</h2>
                         <img src="data:image/png;base64, {logo_right}" />
                     </div>
                 """, unsafe_allow_html=True)
