@@ -72,6 +72,15 @@ def load_data():
     df = pd.read_csv(GOOGLE_SHEET_CSV_URL)
     return df
 
+def drop_empty_or_zero_column(df):
+    for column_name in df.columns:
+        # Replace NaN with 0 for checking purposes
+        col_values = df[column_name].fillna(0)
+        if (col_values == 0).all():
+            df = df.drop(columns=[column_name])
+        
+    
+    return df
 def main():
     if not is_logged_in():
         st.title("🔐 Login")
@@ -197,6 +206,7 @@ def main():
             st.error("Sheet is empty or has less than two columns.")
         else:
             # --- Get unique values from 2nd column ---
+            df = drop_empty_or_zero_column(df)
             second_col = df.columns[-1]
             unique_vals = sorted(df[second_col].dropna().unique())
             # --- Show checkboxes ---
