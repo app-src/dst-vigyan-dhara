@@ -82,32 +82,44 @@ def drop_empty_or_zero_column(df):
     return df
 def highlight_over_budget(df):
     """
-    Highlights Budget, Expenditure, and IFD rows for each division
-    if Expenditure + IFD > Budget.
+    For each division, checks column-wise if
+    Budget < Expenditure + IFD.
+    If true, highlight only those three cells
+    (Budget, Expenditure, IFD) in that column.
     """
     styles = pd.DataFrame('', index=df.index, columns=df.columns)
 
-    divisions = df['DIVISION'].unique()
-
-    for division in divisions:
-        # Get indices for this division
+    # Process division by division
+    for division in df['DIVISION'].unique():
         div_rows = df[df['DIVISION'] == division]
 
-        # Extract values
         try:
-            budget = div_rows.loc[div_rows['Type'] == 'Budget', df.columns[2:]].astype(float).sum(axis=1).values[0]
-            expenditure = div_rows.loc[div_rows['Type'] == 'Expenditure', df.columns[2:]].astype(float).sum(axis=1).values[0]
-            ifd = div_rows.loc[div_rows['Type'] == 'IFD', df.columns[2:]].astype(float).sum(axis=1).values[0]
+            budget_row = div_rows.loc[div_rows['Type'] == 'Budget'].iloc[0]
+            exp_row = div_rows.loc[div_rows['Type'] == 'Expenditure'].iloc[0]
+            ifd_row = div_rows.loc[div_rows['Type'] == 'IFD'].iloc[0]
         except IndexError:
-            continue  # skip if missing data
+            continue  # skip if missing
 
-        # Check condition
-        if (expenditure + ifd) > budget:
-            # Highlight all three rows for this division
-            idxs_to_highlight = div_rows.index
-            styles.loc[idxs_to_highlight, df.columns[2:]] = 'background-color: yellow'
+        # Check every column except identifiers
+        for col in df.columns:
+            if col in ['DIVISION', 'Type']:
+                continue
+
+            try:
+                budget_val = pd.to_numeric(budget_row[col], errors='coerce')
+                exp_val = pd.to_numeric(exp_row[col], errors='coerce')
+                ifd_val = pd.to_numeric(ifd_row[col], errors='coerce')
+            except Exception:
+                continue
+
+            if pd.notna(budget_val) and pd.notna(exp_val) and pd.notna(ifd_val):
+                if (exp_val) > budget_val:
+                    styles.loc[budget_row.name, col] = 'background-color: #FFCCCC'  # Light red background
+                    styles.loc[exp_row.name, col] = 'background-color: #FFCCCC'
+                    styles.loc[ifd_row.name, col] = 'background-color: #FFCCCC'
 
     return styles
+
 def main():
     if not is_logged_in():
         st.title("🔐 Login")
@@ -276,6 +288,7 @@ def main():
                             .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=(filtered_df.index[-1], slice(None)))  # Bold last row
                             .set_table_styles([{'font-weight': 'bold','selector': 'th', 'props': [('font-size', '24px')]}])  # Header font size
                             .apply(colorCodeRows, axis=1)
+                            .apply(highlight_over_budget, axis=None)
                             )
                 
                 st.dataframe(styled_df, use_container_width=True,height=len(filtered_df) * 35 + 50)
