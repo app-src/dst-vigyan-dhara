@@ -67,7 +67,6 @@ def colorCodeRows(row):
     else:
         return ['background-color: white'] * len(row)
 # --- Load data ---
-@st.cache_data
 def load_data():
     df = pd.read_csv(GOOGLE_SHEET_CSV_URL)
     return df
@@ -81,6 +80,34 @@ def drop_empty_or_zero_column(df):
         
     
     return df
+def highlight_over_budget(df):
+    """
+    Highlights Budget, Expenditure, and IFD rows for each division
+    if Expenditure + IFD > Budget.
+    """
+    styles = pd.DataFrame('', index=df.index, columns=df.columns)
+
+    divisions = df['DIVISION'].unique()
+
+    for division in divisions:
+        # Get indices for this division
+        div_rows = df[df['DIVISION'] == division]
+
+        # Extract values
+        try:
+            budget = div_rows.loc[div_rows['Type'] == 'Budget', df.columns[2:]].astype(float).sum(axis=1).values[0]
+            expenditure = div_rows.loc[div_rows['Type'] == 'Expenditure', df.columns[2:]].astype(float).sum(axis=1).values[0]
+            ifd = div_rows.loc[div_rows['Type'] == 'IFD', df.columns[2:]].astype(float).sum(axis=1).values[0]
+        except IndexError:
+            continue  # skip if missing data
+
+        # Check condition
+        if (expenditure + ifd) > budget:
+            # Highlight all three rows for this division
+            idxs_to_highlight = div_rows.index
+            styles.loc[idxs_to_highlight, df.columns[2:]] = 'background-color: yellow'
+
+    return styles
 def main():
     if not is_logged_in():
         st.title("🔐 Login")
@@ -248,7 +275,9 @@ def main():
                             .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=[filtered_df.columns[0]])  # First column
                             .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=(filtered_df.index[-1], slice(None)))  # Bold last row
                             .set_table_styles([{'font-weight': 'bold','selector': 'th', 'props': [('font-size', '24px')]}])  # Header font size
-                            .apply(colorCodeRows, axis=1))
+                            .apply(colorCodeRows, axis=1)
+                            )
+                
                 st.dataframe(styled_df, use_container_width=True,height=len(filtered_df) * 35 + 50)
             else:
                 st.warning("Select at least one option to view data.")
