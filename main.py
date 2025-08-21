@@ -338,21 +338,44 @@ def main():
             # --- Filter data ---
             if selected_filters:
                 filtered_df = df[df[second_col].isin(selected_filters)]
-                # Apply row coloring and zero null filter
-                cleaned_df = filtered_df.copy().map(hide_zeros_and_nans)
-                styled_df = (cleaned_df.style
-                            .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=[filtered_df.columns[-2]])  # Bold last column
-                            .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=[filtered_df.columns[0]])  # First column
-                            .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=(filtered_df.index[-1], slice(None)))  # Bold last row
-                            .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=(filtered_df.index[-2], slice(None)))  # Bold last row
-                            .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=(filtered_df.index[-3], slice(None)))  # Bold last row
-                            .set_table_styles([{'font-weight': 'bold','selector': 'th', 'props': [('font-size', '24px')]}])  # Header font size
-                            .apply(colorCodeRows, axis=1)
-                            .apply(highlight_over_budget, axis=None)
-                            )
-                st.dataframe(styled_df, use_container_width=True,height=len(filtered_df) * 35 + 50)
-            else:
-                st.warning("Select at least one option to view data.")
+
+                # Make a copy for display
+                display_df = filtered_df.copy()
+
+                # Hide duplicate DIVISION values (only consecutive duplicates)
+                display_df['DIVISION'] = display_df['DIVISION'].mask(display_df['DIVISION'].duplicated(), '')
+
+                # Drop 'Type' column ONLY from the display copy
+                if 'Type' in display_df.columns:
+                    display_df = display_df.drop(columns=['Type'])
+
+                # Apply formatting for hiding 0s/NaNs
+                display_df = display_df.map(hide_zeros_and_nans)
+
+                # --- Base styling on display copy ---
+                styled_df = (
+                    display_df.style
+                    .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=[display_df.columns[-1]])
+                    .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=[display_df.columns[0]])
+                    .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=(display_df.index[-1], slice(None)))
+                    .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=(display_df.index[-2], slice(None)))
+                    .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=(display_df.index[-3], slice(None)))
+                    .set_table_styles([{'font-weight': 'bold','selector': 'th', 'props': [('font-size', '24px')]}])
+                    .apply(colorCodeRows, axis=1)
+                )
+
+                # --- Over-budget highlighting ---
+                # highlight_over_budget returns a DataFrame of styles with same index/cols as filtered_df
+                budget_styles = highlight_over_budget(filtered_df)
+
+                # Reindex it to match the display_df (since we dropped 'Type')
+                budget_styles = budget_styles.reindex(columns=display_df.columns, index=display_df.index, fill_value='')
+
+                # Combine styles: display_df.style + budget_styles
+                styled_df = styled_df.set_td_classes(budget_styles)
+
+                st.dataframe(styled_df, use_container_width=True, height=len(display_df) * 35 + 50)
+
 
     except Exception as e:
         st.error(f"Failed to load or parse the CSV: {e}")
