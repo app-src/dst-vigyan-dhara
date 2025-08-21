@@ -19,13 +19,71 @@ color_map = {
 
 }
 
-GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTLV_lAFz5evZVNPLdECqsOjD10jQN4ATlna5UdmUOz24mWTrkjbevk1qvn4u2GZAhssoc9B5Qp_TlC/pub?gid=0&single=true&output=csv"
+BUDGET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTLV_lAFz5evZVNPLdECqsOjD10jQN4ATlna5UdmUOz24mWTrkjbevk1qvn4u2GZAhssoc9B5Qp_TlC/pub?gid=1893274223&single=true&output=csv"
+EXPENDITURE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTLV_lAFz5evZVNPLdECqsOjD10jQN4ATlna5UdmUOz24mWTrkjbevk1qvn4u2GZAhssoc9B5Qp_TlC/pub?gid=564550770&single=true&output=csv"
+IFD_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTLV_lAFz5evZVNPLdECqsOjD10jQN4ATlna5UdmUOz24mWTrkjbevk1qvn4u2GZAhssoc9B5Qp_TlC/pub?gid=1809513698&single=true&output=csv"
 
 # Load users
 users = load_users()
 
 # Cookie manager
 cookie_manager = stx.CookieManager()
+
+def load_sheet(url, type_name):
+    df = pd.read_csv(url)
+    df["Type"] = type_name
+    return df
+
+def load_all_data():
+    budget_df = load_sheet(BUDGET_URL, "Budget")
+    exp_df = load_sheet(EXPENDITURE_URL, "Expenditure")
+    ifd_df = load_sheet(IFD_URL, "IFD")
+
+    # Align columns (intersection across all)
+    common_cols = set(budget_df.columns) & set(exp_df.columns) & set(ifd_df.columns)
+    budget_df = budget_df[list(common_cols)]
+    exp_df = exp_df[list(common_cols)]
+    ifd_df = ifd_df[list(common_cols)]
+
+    # Combine
+    final_df = pd.concat([budget_df, exp_df, ifd_df], ignore_index=True)
+
+    # --- Reorder columns ---
+    cols = list(final_df.columns)
+    div_col = "DIVISION"
+    total_col = "Grand Total"
+    type_col = "Type"
+    middle_cols = [c for c in cols if c not in [div_col, total_col, type_col]]
+    ordered_cols = [div_col] + middle_cols + [total_col, type_col]
+    final_df = final_df[ordered_cols]
+
+    # --- Normalize division names (strip spaces, case-insensitive match) ---
+    final_df[div_col] = final_df[div_col].astype(str).str.strip()
+
+    # --- Separate totals and normal divisions ---
+    total_mask = final_df[div_col].str.lower().eq("total")
+    totals_df = final_df[total_mask].copy()
+    normal_df = final_df[~total_mask].copy()
+
+    # --- Define row order by Type ---
+    type_order = {"Budget": 0, "IFD": 1, "Expenditure": 2}
+
+    # Sort normal divisions
+    normal_df = normal_df.sort_values(
+        by=[div_col, type_col],
+        key=lambda col: col.map(type_order) if col.name == "Type" else col
+    )
+
+    # Sort totals separately (only by Type)
+    totals_df = totals_df.sort_values(
+        by=[type_col],
+        key=lambda col: col.map(type_order)
+    )
+
+    # --- Combine back (normals first, totals at bottom) ---
+    final_df = pd.concat([normal_df, totals_df], ignore_index=True)
+
+    return final_df
 
 
 def is_logged_in():
@@ -240,7 +298,7 @@ def main():
     st.markdown(custom_footer, unsafe_allow_html=True)
 
     try:
-        df = load_data()
+        df = load_all_data()
         if df.empty or df.shape[1] < 2:
             st.error("Sheet is empty or has less than two columns.")
         else:
@@ -290,7 +348,6 @@ def main():
                             .apply(colorCodeRows, axis=1)
                             .apply(highlight_over_budget, axis=None)
                             )
-                
                 st.dataframe(styled_df, use_container_width=True,height=len(filtered_df) * 35 + 50)
             else:
                 st.warning("Select at least one option to view data.")
