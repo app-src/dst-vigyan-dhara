@@ -118,12 +118,21 @@ def hide_zeros_and_nans(val):
 
 
 
-def colorCodeRows(row):
-    last_col_value = row[row.index[-1]]
-    if last_col_value in color_map:
-        return ['background-color: ' + color_map[last_col_value]] * len(row)
-    else:
-        return ['background-color: white'] * len(row)
+def color_rows(_, full_df, display_df):
+    # Create empty style DataFrame aligned to display_df
+    styles = pd.DataFrame('', index=display_df.index, columns=display_df.columns)
+
+    # Loop through full_df rows
+    for idx in display_df.index:
+        if idx in full_df.index:
+            row_type = full_df.loc[idx, "Type"]
+            if row_type in color_map:
+                styles.loc[idx] = ['background-color: ' + color_map[row_type]] * len(display_df.columns)
+            else:
+                styles.loc[idx] = ['background-color: white'] * len(display_df.columns)
+
+    return styles
+
 # --- Load data ---
 def load_data():
     df = pd.read_csv(GOOGLE_SHEET_CSV_URL)
@@ -352,7 +361,15 @@ def main():
                 # Apply formatting for hiding 0s/NaNs
                 display_df = display_df.map(hide_zeros_and_nans)
 
-                # --- Base styling on display copy ---
+                # Highlight over budget applied on filtered_df
+                def highlight_display(_, full_df):
+                    # Call your existing function, but align result to display_df
+                    styles = highlight_over_budget(full_df)
+                    if 'Type' in styles.columns:
+                        styles = styles.drop(columns=['Type'])
+                    return styles.reindex(columns=display_df.columns, index=display_df.index, fill_value='')
+
+                # Build styled DataFrame
                 styled_df = (
                     display_df.style
                     .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=[display_df.columns[-1]])
@@ -360,19 +377,10 @@ def main():
                     .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=(display_df.index[-1], slice(None)))
                     .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=(display_df.index[-2], slice(None)))
                     .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=(display_df.index[-3], slice(None)))
-                    .set_table_styles([{'font-weight': 'bold','selector': 'th', 'props': [('font-size', '24px')]}])
-                    .apply(colorCodeRows, axis=1)
+                    .set_table_styles([{'selector': 'th', 'props': [('font-size', '24px'), ('font-weight', 'bold')]}])
+                    .apply(color_rows, axis=None, full_df=filtered_df, display_df=display_df)
+                    .apply(highlight_display, axis=None, full_df=filtered_df)
                 )
-
-                # --- Over-budget highlighting ---
-                # highlight_over_budget returns a DataFrame of styles with same index/cols as filtered_df
-                budget_styles = highlight_over_budget(filtered_df)
-
-                # Reindex it to match the display_df (since we dropped 'Type')
-                budget_styles = budget_styles.reindex(columns=display_df.columns, index=display_df.index, fill_value='')
-
-                # Combine styles: display_df.style + budget_styles
-                styled_df = styled_df.set_td_classes(budget_styles)
 
                 st.dataframe(styled_df, use_container_width=True, height=len(display_df) * 35 + 50)
 
