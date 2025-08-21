@@ -344,6 +344,8 @@ def main():
                             .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=[filtered_df.columns[-2]])  # Bold last column
                             .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=[filtered_df.columns[0]])  # First column
                             .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=(filtered_df.index[-1], slice(None)))  # Bold last row
+                            .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=(filtered_df.index[-2], slice(None)))  # Bold last row
+                            .set_properties(**{'font-weight': 'bold','font-size': '24px'}, subset=(filtered_df.index[-3], slice(None)))  # Bold last row
                             .set_table_styles([{'font-weight': 'bold','selector': 'th', 'props': [('font-size', '24px')]}])  # Header font size
                             .apply(colorCodeRows, axis=1)
                             .apply(highlight_over_budget, axis=None)
