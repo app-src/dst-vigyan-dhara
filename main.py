@@ -19,10 +19,9 @@ color_map = {
 
 }
 
-BUDGET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTLV_lAFz5evZVNPLdECqsOjD10jQN4ATlna5UdmUOz24mWTrkjbevk1qvn4u2GZAhssoc9B5Qp_TlC/pub?gid=1893274223&single=true&output=csv"
-EXPENDITURE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTLV_lAFz5evZVNPLdECqsOjD10jQN4ATlna5UdmUOz24mWTrkjbevk1qvn4u2GZAhssoc9B5Qp_TlC/pub?gid=564550770&single=true&output=csv"
-IFD_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTLV_lAFz5evZVNPLdECqsOjD10jQN4ATlna5UdmUOz24mWTrkjbevk1qvn4u2GZAhssoc9B5Qp_TlC/pub?gid=1809513698&single=true&output=csv"
-
+BUDGET_URL = "https://docs.google.com/spreadsheets/d/1pUnsZ-OgPGgKeJbfoHkJUlR4i3fXoKa_i-LwhIzHwbk/export?format=csv&id=1pUnsZ-OgPGgKeJbfoHkJUlR4i3fXoKa_i-LwhIzHwbk&gid=1893274223"
+EXPENDITURE_URL = "https://docs.google.com/spreadsheets/d/1pUnsZ-OgPGgKeJbfoHkJUlR4i3fXoKa_i-LwhIzHwbk/export?format=csv&id=1pUnsZ-OgPGgKeJbfoHkJUlR4i3fXoKa_i-LwhIzHwbk&gid=564550770"
+IFD_URL = "https://docs.google.com/spreadsheets/d/1pUnsZ-OgPGgKeJbfoHkJUlR4i3fXoKa_i-LwhIzHwbk/export?format=csv&id=1pUnsZ-OgPGgKeJbfoHkJUlR4i3fXoKa_i-LwhIzHwbk&gid=1809513698"
 # Load users
 users = load_users()
 
