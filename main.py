@@ -22,7 +22,7 @@ color_map = {
 BUDGET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTLV_lAFz5evZVNPLdECqsOjD10jQN4ATlna5UdmUOz24mWTrkjbevk1qvn4u2GZAhssoc9B5Qp_TlC/pub?gid=1893274223&single=true&output=csv"
 EXPENDITURE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTLV_lAFz5evZVNPLdECqsOjD10jQN4ATlna5UdmUOz24mWTrkjbevk1qvn4u2GZAhssoc9B5Qp_TlC/pub?gid=564550770&single=true&output=csv"
 IFD_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTLV_lAFz5evZVNPLdECqsOjD10jQN4ATlna5UdmUOz24mWTrkjbevk1qvn4u2GZAhssoc9B5Qp_TlC/pub?gid=1809513698&single=true&output=csv"
-
+INFO_URL = "https://docs.google.com/spreadsheets/d/1pUnsZ-OgPGgKeJbfoHkJUlR4i3fXoKa_i-LwhIzHwbk/export?format=csv&id=1pUnsZ-OgPGgKeJbfoHkJUlR4i3fXoKa_i-LwhIzHwbk&gid=780038585"
 # Load users
 users = load_users()
 
@@ -110,7 +110,7 @@ def get_base64_image(path):
     with open(path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
 def hide_zeros_and_nans(val):
-    if val == 0 or pd.isna(val):
+    if val == 0 or pd.isna(val) or val == "-":
         return ""
     if isinstance(val, float):
         return f"{val:.2f}".rstrip('0').rstrip('.')  # e.g., 2.50 → 2.5, 2.00 → 2
