@@ -85,7 +85,16 @@ def load_all_data():
 
     return final_df
 
-
+def load_info():
+    """Load info sheet and return (updated_by, last_updated_on)."""
+    try:
+        info_df = pd.read_csv(INFO_URL, header=None)
+        updated_by = str(info_df.iloc[0, 1])  # B1
+        last_updated = str(info_df.iloc[1, 1])  # B2
+        return updated_by, last_updated
+    except Exception as e:
+        return "Unknown", "Unknown"
+    
 def is_logged_in():
     cookies = cookie_manager.get_all()
     return COOKIE_NAME in cookies or 'username' in st.session_state
@@ -308,6 +317,7 @@ def main():
 
     try:
         df = load_all_data()
+        updated_by, last_updated = load_info()
         if df.empty or df.shape[1] < 2:
             st.error("Sheet is empty or has less than two columns.")
         else:
@@ -317,32 +327,44 @@ def main():
             unique_vals = sorted(df[second_col].dropna().unique())
             # --- Show checkboxes ---
             # st.subheader(f"Filter by `{second_col}`")
-            st.subheader(f"Filter by :")
-            selected_filters = []
-            cols = st.columns(len(unique_vals))
-            for i, val in enumerate(unique_vals):
-                with cols[i]:
-                    # Create checkbox with no label
-                    cb = st.checkbox(" ", key=f"cb_{val}", value=True)
+            st.subheader("Filter by :")
 
-                    # Add a custom styled label next to the checkbox
-                    label_html = f"""
-                    <label style='
-                        display: inline-block;
-                        background-color: {color_map.get(val, "#eee")};
-                        padding: 4px 10px;
-                        border-radius: 5px;
-                        font-weight: bold;
-                        margin-top: -28px;
-                        margin-left: 30px;
-                        position: relative;
-                        top: -12px;
-                    '>{val}</label>
-                    """
-                    st.markdown(label_html, unsafe_allow_html=True)
+            # Create two rows of columns: first for filters + info
+            filter_cols = st.columns([len(unique_vals), 2])  # wide for filters, narrow for info
 
-                    if cb:
-                        selected_filters.append(val)
+            with filter_cols[0]:
+                selected_filters = []
+                cols = st.columns(len(unique_vals))
+                for i, val in enumerate(unique_vals):
+                    with cols[i]:
+                        cb = st.checkbox(" ", key=f"cb_{val}", value=True)
+                        label_html = f"""
+                        <label style='
+                            display: inline-block;
+                            background-color: {color_map.get(val, "#eee")};
+                            padding: 4px 10px;
+                            border-radius: 5px;
+                            font-weight: bold;
+                            margin-top: -28px;
+                            margin-left: 30px;
+                            position: relative;
+                            top: -12px;
+                        '>{val}</label>
+                        """
+                        st.markdown(label_html, unsafe_allow_html=True)
+                        if cb:
+                            selected_filters.append(val)
+
+            with filter_cols[1]:
+                st.markdown(
+                    f"""
+                    <div style='text-align: right; font-size:16px; font-weight:bold;'>
+                        Data Last Updated On: <span style="color:blue;">{last_updated}</span><br>
+                        Updated By: <span style="color:green;">{updated_by}</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
             # --- Filter data ---
             if selected_filters:
